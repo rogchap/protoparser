@@ -1,3 +1,5 @@
+// Package TODO
+//
 package protoparser
 
 import (
@@ -28,6 +30,7 @@ func readSource(filename string, src interface{}) ([]byte, error) {
 	return ioutil.ReadFile(filename)
 }
 
+// ParseFile TODO
 func ParseFile(filename string, src interface{}) (*descriptorpb.FileDescriptorProto, error) {
 	source, err := readSource(filename, src)
 	if err != nil {
