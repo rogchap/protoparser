@@ -48,6 +48,7 @@ const (
 	MAP
 	RESERVED
 	TO
+	MAX
 	ENUM
 	MESSAGE
 	SERVICE
@@ -92,7 +93,8 @@ var tokens = [...]string{
 	ONEOF:    "oneof",
 	RESERVED: "reserved",
 	MAP:      "map",
-	TO:       "to",
+	TO:       "to",  // only used as a reserved range so maybe should not be a keyword
+	MAX:      "max", // only used as a reserved range so maybe should not be a keyword
 	ENUM:     "enum",
 	MESSAGE:  "message",
 	SERVICE:  "service",

@@ -14,6 +14,15 @@ type el struct {
 
 var tokens = [...]el{
 	{token.IDENT, "foobar"},
+	{token.IDENT, "foobar1234"},
+	{token.IDENT, "foo_bar"},
+	{token.SYNTAX, "syntax"},
+	{token.ASSIGN, "="},
+	{token.SEMICOLON, ";"},
+	{token.STRING, "'foo bar'"},
+	{token.STRING, `"foo bar"`},
+	{token.ILLEGAL, "_"},
+	{token.EOF, ""},
 }
 
 const whitespace = "  \t  \n\n\n" // to separate tokens
@@ -28,7 +37,7 @@ var source = func() []byte {
 }
 
 func TestScan(t *testing.T) {
-
+	t.Parallel()
 	var s scanner.Scanner
 	s.Init(source())
 

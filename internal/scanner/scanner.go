@@ -36,10 +36,10 @@ func (s *Scanner) next() {
 		s.offset = s.rdOffset
 		s.ch = rune(s.src[s.rdOffset])
 		s.rdOffset += 1
-	} else {
-		s.offset = len(s.src)
-		s.ch = -1 // eof
+		return
 	}
+	s.offset = len(s.src)
+	s.ch = -1 // eof
 }
 
 func (s *Scanner) skipWhitespace() {
@@ -65,6 +65,8 @@ func (s *Scanner) Scan() (tok token.Token, lit string) {
 		case '"', '\'':
 			tok = token.STRING
 			lit = s.scanString()
+		case ';':
+			tok = token.SEMICOLON
 		case -1:
 			tok = token.EOF
 		default:

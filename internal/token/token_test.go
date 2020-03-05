@@ -23,6 +23,7 @@ func TestLookup(t *testing.T) {
 		{"reserved", token.RESERVED},
 		{"map", token.MAP},
 		{"to", token.TO},
+		{"max", token.MAX},
 		{"enum", token.ENUM},
 		{"message", token.MESSAGE},
 		{"service", token.SERVICE},
