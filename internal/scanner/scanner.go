@@ -2,7 +2,9 @@
 //
 package scanner
 
-import "rogchap.com/protoparser/internal/token"
+import (
+	"rogchap.com/protoparser/internal/token"
+)
 
 // Scanner is the data structure for a lexer
 type Scanner struct {
@@ -56,7 +58,7 @@ func (s *Scanner) Scan() (tok token.Token, lit string) {
 	case isLetter(ch):
 		lit = s.scanIdentifier()
 		tok = token.Lookup(lit)
-	case isDigit(ch):
+	// case isDigit(ch):
 	default:
 		s.next() // always make progress
 		switch ch {
@@ -67,6 +69,9 @@ func (s *Scanner) Scan() (tok token.Token, lit string) {
 			lit = s.scanString()
 		case ';':
 			tok = token.SEMICOLON
+		case '.':
+			tok = token.DOT
+			lit = string(ch)
 		case -1:
 			tok = token.EOF
 		default:

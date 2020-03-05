@@ -3,42 +3,17 @@
 package protoparser
 
 import (
-	"bytes"
-	"errors"
-	"io"
-	"io/ioutil"
-
 	"google.golang.org/protobuf/types/descriptorpb"
+	"rogchap.com/protoparser/internal/parser"
 )
 
-func readSource(filename string, src interface{}) ([]byte, error) {
-	if src != nil {
-		switch s := src.(type) {
-		case string:
-			return []byte(s), nil
-		case []byte:
-			return s, nil
-		case *bytes.Buffer:
-			if s != nil {
-				return s.Bytes(), nil
-			}
-		case io.Reader:
-			return ioutil.ReadAll(s)
-		}
-		return nil, errors.New("protoparser: invalid source")
-	}
-	return ioutil.ReadFile(filename)
-}
+// TODO: Should we provide so wrapper functions to make this easier for the caller?
+// for example:
+// Parse(filename string)
+// ParseReader(r io.Reader)
+// ParseBuffer(buf bytes.Buffer)
 
 // ParseFile TODO
 func ParseFile(filename string, src interface{}) (*descriptorpb.FileDescriptorProto, error) {
-	source, err := readSource(filename, src)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: parse the source
-	_ = source
-
-	return &descriptorpb.FileDescriptorProto{}, nil
+	return parser.ParseFile(filename, src)
 }
