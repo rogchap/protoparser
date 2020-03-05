@@ -34,10 +34,18 @@ func (p *parser) expect(tok token.Token) {
 	p.next()
 }
 
+func (p *parser) parseStrLit() string {
+	if p.tok != token.STRING {
+		//TODO: deal with error
+		return ""
+	}
+	return string(p.lit[1 : len(p.lit)-1]) // strip the quotes
+}
+
 func (p *parser) parseSyntax() string {
 	p.next()
 	p.expect(token.ASSIGN)
-	s := string(p.lit[1 : len(p.lit)-1]) // strip the quotes
+	s := p.parseStrLit()
 	p.expect(token.SEMICOLON)
 	return s
 }
@@ -72,6 +80,18 @@ func (p *parser) parsePackage() string {
 	return s
 }
 
+func (p *parser) parseDependency() (dep string, isPublic, isWeak bool) {
+	p.next()
+	isPublic = p.tok == token.PUBLIC
+	isWeak = p.tok == token.WEAK
+	if isPublic || isWeak {
+		p.next()
+	}
+	dep = p.parseStrLit()
+	p.expect(token.SEMICOLON)
+	return
+}
+
 func (p *parser) parseFile() *descriptorpb.FileDescriptorProto {
 
 	// syntax must be the first non-empty, non-comment line of the file.
@@ -86,6 +106,7 @@ func (p *parser) parseFile() *descriptorpb.FileDescriptorProto {
 		name, pkg string
 		deps      []string
 		pDeps     []int32
+		wDeps     []int32
 		msgs      []*descriptorpb.DescriptorProto
 		enums     []*descriptorpb.EnumDescriptorProto
 		srcs      []*descriptorpb.ServiceDescriptorProto
@@ -96,9 +117,18 @@ func (p *parser) parseFile() *descriptorpb.FileDescriptorProto {
 	for p.tok != token.EOF {
 		switch p.tok {
 		case token.PACKAGE:
-			// [RC] if pacakge is declared twice is this a systax err
+			// [RC] if pacakge is declared twice is this a syntax err
 			// or do we expect the first or last pacakge declaration?
 			pkg = p.parsePackage()
+		case token.IMPORT:
+			d, p, w := p.parseDependency()
+			deps = append(deps, d)
+			if p {
+				pDeps = append(pDeps, int32(len(deps)-1))
+			}
+			if w {
+				wDeps = append(wDeps, int32(len(deps)-1))
+			}
 		default:
 			// TODO: deal with unexpected token error
 			p.next()
@@ -111,6 +141,7 @@ func (p *parser) parseFile() *descriptorpb.FileDescriptorProto {
 		Package:          &pkg,
 		Dependency:       deps,
 		PublicDependency: pDeps,
+		WeakDependency:   wDeps,
 		MessageType:      msgs,
 		EnumType:         enums,
 		Service:          srcs,
