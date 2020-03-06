@@ -72,6 +72,10 @@ func (s *Scanner) Scan() (tok token.Token, lit string) {
 		case '.':
 			tok = token.DOT
 			lit = string(ch)
+		case '{':
+			tok = token.LBRACE
+		case '}':
+			tok = token.RBRACE
 		case -1:
 			tok = token.EOF
 		default:
