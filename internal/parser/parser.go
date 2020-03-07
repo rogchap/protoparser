@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"strconv"
 	"strings"
 
 	"google.golang.org/protobuf/types/descriptorpb"
@@ -100,6 +101,17 @@ func (p *parser) _skipTo(tok token.Token) {
 	p.next()
 }
 
+func (p *parser) parserFieldType() (typ descriptorpb.FieldDescriptorProto_Type, name string) {
+	key := "TYPE_" + strings.ToUpper(p.lit)
+	typ = descriptorpb.FieldDescriptorProto_Type(descriptorpb.FieldDescriptorProto_Type_value[key])
+	if typ == 0 {
+		// TODO: Need to get type name for Message or Enum
+		// will need some sort of lookup
+	}
+	p.next()
+	return
+}
+
 func (p *parser) parseNormalField() *descriptorpb.FieldDescriptorProto {
 	var (
 		name     string
@@ -118,16 +130,24 @@ func (p *parser) parseNormalField() *descriptorpb.FieldDescriptorProto {
 		label = descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL
 	}
 
-	// TODO: deal with normal, message, enum type
-	p.next()
+	typ, typName = p.parserFieldType()
 
 	if p.tok != token.IDENT {
 		//TODO: deal with unexpected token
 	}
 	name = p.lit
 	jsonName = jsonCamelCase(name)
+	p.next()
 
 	p.expect(token.ASSIGN)
+
+	if p.tok != token.INT {
+		// TODO: deal with error
+	}
+
+	i, _ := strconv.Atoi(p.lit)
+	number = int32(i)
+	p.next()
 
 	p._skipTo(token.SEMICOLON)
 	return &descriptorpb.FieldDescriptorProto{
@@ -139,6 +159,81 @@ func (p *parser) parseNormalField() *descriptorpb.FieldDescriptorProto {
 		JsonName: strPtr(jsonName),
 		Options:  opt,
 	}
+}
+
+func (p *parser) parseMapField() (*descriptorpb.FieldDescriptorProto, *descriptorpb.DescriptorProto) {
+	// mapField = "map" "<" keyType "," type ">" mapName "=" fieldNumber [ "[" fieldOptions "]" ] ";"
+	// keyType = "int32" | "int64" | "uint32" | "uint64" | "sint32" | "sint64" |
+	//           "fixed32" | "fixed64" | "sfixed32" | "sfixed64" | "bool" | "string"
+	p.next()
+
+	var (
+		name, entryName, typName string
+		lbl                      = descriptorpb.FieldDescriptorProto_LABEL_REPEATED
+		typ                      = descriptorpb.FieldDescriptorProto_TYPE_MESSAGE
+		entryFields              []*descriptorpb.FieldDescriptorProto
+		entryOpts                = &descriptorpb.MessageOptions{MapEntry: boolPtr(true)}
+	)
+
+	p.expect(token.LANGLE)
+	ktyp, _ := p.parserFieldType()
+	if ktyp == 0 {
+		// TODO: deal with unexpected key type
+	}
+	p.expect(token.COMMA)
+	vtyp, vtypName := p.parserFieldType()
+	p.expect(token.RANGLE)
+
+	entryLbl := descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL
+	var n, n2 int32 = 1, 2
+	entryFields = append(entryFields, &descriptorpb.FieldDescriptorProto{
+		Name:     strPtr("key"),
+		JsonName: strPtr("key"),
+		Label:    &entryLbl,
+		Number:   &n,
+		Type:     &ktyp,
+	}, &descriptorpb.FieldDescriptorProto{
+		Name:     strPtr("value"),
+		JsonName: strPtr("value"),
+		Label:    &entryLbl,
+		Number:   &n2,
+		Type:     &vtyp,
+		TypeName: strPtr(vtypName),
+	})
+
+	if p.tok != token.IDENT {
+		//TODO: deal with error
+	}
+	name = p.lit
+	entryName = mapEntryName(p.lit)
+	p.next()
+
+	//TODO: Get the full type name for the MapEntry message that we are adding
+
+	p.expect(token.ASSIGN)
+
+	if p.tok != token.INT {
+		//TODO: deal with unexpected token
+	}
+	i, _ := strconv.Atoi(p.lit)
+	number := int32(i)
+
+	// TODO: deal with options
+	p._skipTo(token.SEMICOLON)
+
+	return &descriptorpb.FieldDescriptorProto{
+			Name:     strPtr(name),
+			JsonName: strPtr(jsonCamelCase(name)),
+			Label:    &lbl,
+			Number:   &number,
+			Type:     &typ,
+			TypeName: strPtr(typName),
+		},
+		&descriptorpb.DescriptorProto{
+			Name:    strPtr(entryName),
+			Field:   entryFields,
+			Options: entryOpts,
+		}
 }
 
 func (p *parser) parseMessage() *descriptorpb.DescriptorProto {
@@ -175,7 +270,9 @@ func (p *parser) parseMessage() *descriptorpb.DescriptorProto {
 		case token.REPEATED, token.IDENT:
 			fields = append(fields, p.parseNormalField())
 		case token.MAP:
-			p._skipTo(token.SEMICOLON)
+			mf, mn := p.parseMapField()
+			fields = append(fields, mf)
+			nested = append(nested, mn)
 		default:
 			// TODO: deal with unexpected token
 			p.next()
@@ -235,7 +332,6 @@ func (p *parser) parseFile() *descriptorpb.FileDescriptorProto {
 				wDeps = append(wDeps, int32(len(deps)-1))
 			}
 		case token.MESSAGE:
-			println("Outer Message")
 			msgs = append(msgs, p.parseMessage())
 		default:
 			// TODO: deal with unexpected token error
@@ -264,4 +360,8 @@ func strPtr(s string) *string {
 		return nil
 	}
 	return &s
+}
+
+func boolPtr(b bool) *bool {
+	return &b
 }

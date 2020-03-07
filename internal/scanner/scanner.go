@@ -58,7 +58,8 @@ func (s *Scanner) Scan() (tok token.Token, lit string) {
 	case isLetter(ch):
 		lit = s.scanIdentifier()
 		tok = token.Lookup(lit)
-	// case isDigit(ch):
+	case isDigit(ch):
+		tok, lit = s.scanNumber()
 	default:
 		s.next() // always make progress
 		switch ch {
@@ -76,6 +77,12 @@ func (s *Scanner) Scan() (tok token.Token, lit string) {
 			tok = token.LBRACE
 		case '}':
 			tok = token.RBRACE
+		case '<':
+			tok = token.LANGLE
+		case '>':
+			tok = token.RANGLE
+		case ',':
+			tok = token.COMMA
 		case -1:
 			tok = token.EOF
 		default:
@@ -117,4 +124,22 @@ func (s *Scanner) scanString() string {
 		}
 	}
 	return string(s.src[offs:s.offset])
+}
+
+func (s *Scanner) scanNumber() (token.Token, string) {
+	offs := s.offset
+	tok := token.INT
+	s.scanMantissa()
+	if s.ch == '.' {
+		tok = token.FLOAT
+		s.next()
+		s.scanMantissa()
+	}
+	return tok, string(s.src[offs:s.offset])
+}
+
+func (s *Scanner) scanMantissa() {
+	for isDigit(s.ch) {
+		s.next()
+	}
 }

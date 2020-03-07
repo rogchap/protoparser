@@ -35,6 +35,7 @@ const (
 
 	SEMICOLON // ;
 	DOT       // .
+	COMMA     // ,
 
 	keyword_beg
 	SYNTAX
@@ -82,6 +83,7 @@ var tokens = [...]string{
 
 	SEMICOLON: ";",
 	DOT:       ".",
+	COMMA:     ",",
 
 	SYNTAX:   "syntax",
 	IMPORT:   "import",
