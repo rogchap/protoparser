@@ -358,6 +358,52 @@ func (p *parser) parseEnum() *descriptorpb.EnumDescriptorProto {
 	}
 }
 
+func (p *parser) parseFileOption(opt *descriptorpb.FileOptions) {
+	p.next()
+	if p.tok != token.IDENT {
+		//TODO: deal with errors
+	}
+	ident := p.lit
+	// TODO: deal with fullIdent
+	p.next()
+
+	p.expect(token.ASSIGN)
+
+	println(p.tok.String())
+	switch token.LookupFileOption(ident) {
+	case token.JAVA_PACKAGE:
+		opt.JavaPackage = &constant
+	case token.JAVA_OUTER_CLASSNAME:
+		opt.JavaOuterClassname = &constant
+	case token.JAVA_MULTIPLE_FILES:
+		b, _ := strconv.ParseBool(constant)
+		opt.JavaMultipleFiles = &b
+	case token.JAVA_STRING_CHECK_UTF8:
+		b, _ := strconv.ParseBool(constant)
+		opt.JavaStringCheckUtf8 = &b
+	case token.OPTIMIZE_FOR:
+	case token.GO_PACKAGE:
+		opt.GoPackage = &constant
+	case token.CC_GENERIC_SERVICES:
+	case token.JAVA_GENERIC_SERVICES:
+	case token.PY_GENERIC_SERVICES:
+	case token.PHP_GENERIC_SERVICES:
+	case token.DEPRECATED:
+	case token.CC_ENABLE_ARENAS:
+	case token.OBJC_CLASS_PREFIX:
+	case token.CSHARP_NAMESPACE:
+	case token.SWIFT_PREFIX:
+	case token.PHP_CLASS_PREFIX:
+	case token.PHP_NAMESPACE:
+	case token.PHP_METADATA_NAMESPACE:
+	case token.RUBY_PACKAGE:
+	default:
+		//TODO: deal with custom option
+	}
+
+	p._skipTo(token.SEMICOLON)
+}
+
 func (p *parser) parseFile() *descriptorpb.FileDescriptorProto {
 
 	// syntax must be the first non-empty, non-comment line of the file.
@@ -395,6 +441,11 @@ func (p *parser) parseFile() *descriptorpb.FileDescriptorProto {
 			if w {
 				wDeps = append(wDeps, int32(len(deps)-1))
 			}
+		case token.OPTION:
+			if opt == nil {
+				opt = &descriptorpb.FileOptions{}
+			}
+			p.parseFileOption(opt)
 		case token.MESSAGE:
 			msgs = append(msgs, p.parseMessage())
 		case token.ENUM:

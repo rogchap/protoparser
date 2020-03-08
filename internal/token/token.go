@@ -57,6 +57,28 @@ const (
 	STREAM
 	RETURNS
 	keyword_end
+
+	file_options_beg
+	JAVA_PACKAGE
+	JAVA_OUTER_CLASSNAME
+	JAVA_MULTIPLE_FILES
+	JAVA_STRING_CHECK_UTF8
+	OPTIMIZE_FOR
+	GO_PACKAGE
+	CC_GENERIC_SERVICES
+	JAVA_GENERIC_SERVICES
+	PY_GENERIC_SERVICES
+	PHP_GENERIC_SERVICES
+	DEPRECATED
+	CC_ENABLE_ARENAS
+	OBJC_CLASS_PREFIX
+	CSHARP_NAMESPACE
+	SWIFT_PREFIX
+	PHP_CLASS_PREFIX
+	PHP_NAMESPACE
+	PHP_METADATA_NAMESPACE
+	RUBY_PACKAGE
+	file_options_end
 )
 
 var tokens = [...]string{
@@ -103,6 +125,26 @@ var tokens = [...]string{
 	RPC:      "rpc",
 	STREAM:   "stream",
 	RETURNS:  "returns",
+
+	JAVA_PACKAGE:           "java_package",
+	JAVA_OUTER_CLASSNAME:   "java_outer_classname",
+	JAVA_MULTIPLE_FILES:    "java_multiple_files",
+	JAVA_STRING_CHECK_UTF8: "java_string_check_utf8",
+	OPTIMIZE_FOR:           "optimize_for",
+	GO_PACKAGE:             "go_package",
+	CC_GENERIC_SERVICES:    "cc_generic_services",
+	JAVA_GENERIC_SERVICES:  "java_generic_services",
+	PY_GENERIC_SERVICES:    "py_generic_services",
+	PHP_GENERIC_SERVICES:   "php_generic_services",
+	DEPRECATED:             "deprecated",
+	CC_ENABLE_ARENAS:       "cc_enable_arenas",
+	OBJC_CLASS_PREFIX:      "objc_class_prefix",
+	CSHARP_NAMESPACE:       "csharp_namespace",
+	SWIFT_PREFIX:           "swift_prefix",
+	PHP_CLASS_PREFIX:       "php_class_prefix",
+	PHP_NAMESPACE:          "php_namespace",
+	PHP_METADATA_NAMESPACE: "php_metadata_namespace",
+	RUBY_PACKAGE:           "ruby_package",
 }
 
 // String returns the string corresponding to the token tok.
@@ -123,17 +165,29 @@ func (tok Token) String() string {
 }
 
 var keywords map[string]Token
+var fileOpts map[string]Token
 
 func init() {
 	keywords = make(map[string]Token)
 	for i := keyword_beg + 1; i < keyword_end; i++ {
 		keywords[tokens[i]] = i
 	}
+	fileOpts = make(map[string]Token)
+	for i := file_options_beg + 1; i < file_options_end; i++ {
+		fileOpts[tokens[i]] = i
+	}
 }
 
 // Lookup maps an identifier to its keyword token or IDENT (if not a keyword).
 func Lookup(ident string) Token {
 	if tok, is_keyword := keywords[ident]; is_keyword {
+		return tok
+	}
+	return IDENT
+}
+
+func LookupFileOption(ident string) Token {
+	if tok, ok := fileOpts[ident]; ok {
 		return tok
 	}
 	return IDENT
