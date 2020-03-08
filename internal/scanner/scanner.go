@@ -135,6 +135,7 @@ func (s *Scanner) scanNumber() (token.Token, string) {
 		s.next()
 		s.scanMantissa()
 	}
+	// TODO: Deal with octal and hex numbers
 	return tok, string(s.src[offs:s.offset])
 }
 

@@ -294,6 +294,70 @@ func (p *parser) parseMessage() *descriptorpb.DescriptorProto {
 	}
 }
 
+func (p *parser) parseEnumValue() *descriptorpb.EnumValueDescriptorProto {
+	name := p.lit
+	p.next()
+	p.expect(token.ASSIGN)
+	if p.tok != token.INT {
+		// TODO: deal with error
+	}
+	i, _ := strconv.Atoi(p.lit)
+	number := int32(i)
+
+	//TODO: parse options
+	p._skipTo(token.SEMICOLON)
+
+	return &descriptorpb.EnumValueDescriptorProto{
+		Name:   strPtr(name),
+		Number: &number,
+	}
+}
+
+func (p *parser) parseEnum() *descriptorpb.EnumDescriptorProto {
+	// enum = "enum" enumName enumBody
+	// enumBody = "{" { option | enumField | emptyStatement } "}"
+	// enumField = ident "=" intLit [ "[" enumValueOption { ","  enumValueOption } "]" ]";"
+	// enumValueOption = optionName "=" constant
+	p.next()
+
+	var (
+		name string
+		vals []*descriptorpb.EnumValueDescriptorProto
+		opts *descriptorpb.EnumOptions
+	)
+
+	if p.tok != token.IDENT {
+		//TODO deal with unexpected token
+	}
+	name = p.lit
+	p.next()
+	p.expect(token.LBRACE)
+
+	for p.tok != token.RBRACE && p.tok != token.EOF {
+		switch p.tok {
+		case token.OPTION:
+			// TODO: parse options
+			p._skipTo(token.SEMICOLON)
+		case token.SEMICOLON:
+			p.next()
+		case token.IDENT:
+			//TODO: parse vals
+			vals = append(vals, p.parseEnumValue())
+		default:
+			// TODO: deal with unexpected token
+			p.next()
+		}
+	}
+
+	p._skipTo(token.RBRACE)
+
+	return &descriptorpb.EnumDescriptorProto{
+		Name:    strPtr(name),
+		Value:   vals,
+		Options: opts,
+	}
+}
+
 func (p *parser) parseFile() *descriptorpb.FileDescriptorProto {
 
 	// syntax must be the first non-empty, non-comment line of the file.
@@ -333,6 +397,8 @@ func (p *parser) parseFile() *descriptorpb.FileDescriptorProto {
 			}
 		case token.MESSAGE:
 			msgs = append(msgs, p.parseMessage())
+		case token.ENUM:
+			enums = append(enums, p.parseEnum())
 		default:
 			// TODO: deal with unexpected token error
 			p.next()
