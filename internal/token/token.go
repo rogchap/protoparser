@@ -19,7 +19,6 @@ const (
 	IDENT  // MessageName
 	INT    // 1234
 	FLOAT  // 1234.12
-	BOOL   // true
 	STRING // "abc"
 
 	ASSIGN // =
@@ -89,7 +88,6 @@ var tokens = [...]string{
 	IDENT:  "IDENT",
 	INT:    "INT",
 	FLOAT:  "FLOAT",
-	BOOL:   "BOOL",
 	STRING: "STRING",
 
 	ASSIGN: "=",

@@ -43,6 +43,15 @@ func (p *parser) parseStrLit() string {
 	return string(p.lit[1 : len(p.lit)-1]) // strip the quotes
 }
 
+func (p *parser) parseBoolLit() bool {
+	b, ok := strconv.ParseBool(p.lit)
+	if !ok {
+		//TODO: deal with error
+		return false
+	}
+	return b
+}
+
 func (p *parser) parseSyntax() string {
 	p.next()
 	p.expect(token.ASSIGN)
@@ -369,34 +378,45 @@ func (p *parser) parseFileOption(opt *descriptorpb.FileOptions) {
 
 	p.expect(token.ASSIGN)
 
-	println(p.tok.String())
 	switch token.LookupFileOption(ident) {
 	case token.JAVA_PACKAGE:
-		opt.JavaPackage = &constant
+		opt.JavaPackage = strPtr(p.parseStrLit())
 	case token.JAVA_OUTER_CLASSNAME:
-		opt.JavaOuterClassname = &constant
+		opt.JavaOuterClassname = strPtr(p.parseStrLit())
 	case token.JAVA_MULTIPLE_FILES:
-		b, _ := strconv.ParseBool(constant)
-		opt.JavaMultipleFiles = &b
+		opt.JavaMultipleFiles = boolPtr(p.parseBoolLit())
 	case token.JAVA_STRING_CHECK_UTF8:
-		b, _ := strconv.ParseBool(constant)
-		opt.JavaStringCheckUtf8 = &b
+		opt.JavaStringCheckUtf8 = boolPtr(p.parseBoolLit())
 	case token.OPTIMIZE_FOR:
+		// TODO: parse enum values
 	case token.GO_PACKAGE:
-		opt.GoPackage = &constant
+		opt.GoPackage = strPtr(p.parseStrLit())
 	case token.CC_GENERIC_SERVICES:
+		opt.CcGenericServices = boolPtr(p.parseBoolLit())
 	case token.JAVA_GENERIC_SERVICES:
+		opt.JavaGenericServices = boolPtr(p.parseBoolLit())
 	case token.PY_GENERIC_SERVICES:
+		opt.PyGenericServices = boolPtr(p.parseBoolLit())
 	case token.PHP_GENERIC_SERVICES:
+		opt.PhpGenericServices = boolPtr(p.parseBoolLit())
 	case token.DEPRECATED:
+		opt.Deprecated = boolPtr(p.parseBoolLit())
 	case token.CC_ENABLE_ARENAS:
+		opt.CcEnableArenas = boolPtr(p.parseBoolLit())
 	case token.OBJC_CLASS_PREFIX:
+		opt.ObjcClassPrefix = strPtr(p.parseStrLit())
 	case token.CSHARP_NAMESPACE:
+		opt.CsharpNamespace = strPtr(p.parseStrLit())
 	case token.SWIFT_PREFIX:
+		opt.SwiftPrefix = strPtr(p.parseStrLit())
 	case token.PHP_CLASS_PREFIX:
+		opt.PhpClassPrefix = strPtr(p.parseStrLit())
 	case token.PHP_NAMESPACE:
+		opt.PhpClassPrefix = strPtr(p.parseStrLit())
 	case token.PHP_METADATA_NAMESPACE:
+		opt.PhpMetadataNamespace = strPtr(p.parseStrLit())
 	case token.RUBY_PACKAGE:
+		opt.RubyPackage = strPtr(p.parseStrLit())
 	default:
 		//TODO: deal with custom option
 	}

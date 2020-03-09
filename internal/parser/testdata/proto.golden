@@ -105,6 +105,5 @@
  "options": {
   "go_package": ".;foobar"
  },
- "source_code_info": {},
  "syntax": "proto3"
 }
